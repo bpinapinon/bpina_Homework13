@@ -1,28 +1,26 @@
-// Top 10 function
-function top10(sorted_id , unsortedArray){
+function topIDS(sorted_id, unsortedArray){
   var sorted = []
   for(var i=0; i < sorted_id.length; i++){
       sorted.push(unsortedArray[sorted_id[i]])}
   return sorted.slice(0,10)}
 
-// Metadata function
 function buildMetadata(sample) {
   // buildGauge(data.WFREQ);
-  var metaElement = d3.select("#sample-metadata")
+  var metaDATA = d3.select("#sample-metadata")
   var washGauge = d3.select("#gauge")
-  metaElement.html("")
+  metaDATA.html("")
   
   
   var url = `/metadata/${sample}`
   d3.json(url).then(function(response) {
       Object.entries(response).forEach(([key, value]) => {
-      metaElement.append("p").text(`${key}: ${value}`); })
+      metaDATA.append("p").text(`${key}: ${value}`); })
       
       var level = response['WFREQ'];
       
 
-      // Calculate Meter Point
-      var degrees = 180 - level * 20,
+      // trig to calculate meter point
+      var degrees = 180 - level*20,
            radius = .8;
       var radians = degrees * Math.PI / 180;
       var x = radius * Math.cos(radians);
@@ -38,7 +36,8 @@ function buildMetadata(sample) {
          x: [0], y:[0],
           marker: {size: 28, color:'850000'},
           showlegend: false,
-          name: 'Wash Frequency',
+          name: 'Frequency of belly button washing',
+          hoverinfo: 'text+name',
           text: level,
           hoverinfo: 'text+name'},
         { values: [10, 10, 10, 10, 10, 10, 10, 10, 10, 90],
@@ -47,11 +46,10 @@ function buildMetadata(sample) {
         textinfo: 'text',
         textposition:'inside',      
         marker: {
-//         colors:['rgba(132, 181, 137, .9)', 'rgba(141, 191, 145, .9)', 'rgba(138, 192, 134, .9)', 
-//                     'rgba(183, 205, 143, .9)', 'rgba(213, 229, 153, .9)', 'rgba(229, 232, 176, .9)',
-//                 'rgba(233, 230, 201, .9)', 'rgba(244, 241, 228, .9)', 'rgba(248, 243, 236, .9)',
-//                 'rgba(255, 255, 255, 0)']},
-        colors:['#e6e6fa', '#fff0f5', '#f0ffff', '#b0e0e6', '#f0e68c', '#fafad2','#ff69b4', '#dda0dd', '#9932cc','#d8bfd8']},
+        colors:['rgba(0, 115, 0, .9)', 'rgba(141, 191, 145, .9)', 'rgba(138, 192, 134, .9)', 
+                    'rgba(183, 205, 143, .9)', 'rgba(213, 229, 153, .9)', 'rgba(229, 232, 176, .9)',
+                'rgba(233, 230, 201, .9)', 'rgba(244, 241, 228, .9)', 'rgba(248, 243, 236, .9)',
+                'rgba(255, 255, 255, 0)']},
         labels: ['8-9', '7-8', '6-7', '5-6', '4-5', '3-4', '2-3', '1-2', '0-1', ''],
         hoverinfo: 'text',
         hole: .5,
@@ -84,7 +82,6 @@ function buildMetadata(sample) {
   
 }
 
-// Built Chart Function
 function buildCharts(sample) {
 
   var url = `/samples/${sample}`
@@ -95,9 +92,9 @@ function buildCharts(sample) {
 
       var trace1 = {
       type: "pie",
-      values: top10(sorted_id, values),
-      hovertext: top10(sorted_id, response.otu_labels),
-      labels: top10(sorted_id, response.otu_ids),
+      values: topIDS(sorted_id, values),
+      hovertext: topIDS(sorted_id, response.otu_labels),
+      labels: topIDS(sorted_id, response.otu_ids),
       hoverinfo: 'text',
       };
   
@@ -108,8 +105,8 @@ function buildCharts(sample) {
         type: "scatter",
         hovertext: response.otu_labels,
         marker: {
-          color: response.otu_ids,
           size: response.sample_values,
+          color: response.otu_ids,
           colorscale: "Earth"
         },
       };
@@ -121,8 +118,8 @@ function buildCharts(sample) {
   
   var layout2 = {
       title: "Bubble Plot",
-      xaxis: {title: "otu_ids"},
-      yaxis: {title: "sample values"},
+      xaxis: {title: "OTU IDs"},
+      yaxis: {title: "Sample Values"},
       hovermode: 'closest'
   };
 
@@ -132,32 +129,31 @@ function buildCharts(sample) {
 })
 }
 
-// Build Init function
 function init() {
-// Ref to the dropdown; select element
+// reference to the dropdown select element
 var selector = d3.select("#selDataset");
 
-// Populate selection options using the list of sample name
-d3.json("/names").then((sampleNames) => {
-  sampleNames.forEach((sample) => {
+// sample names for dropdown options
+d3.json("/names").then((sample_names) => {
+  sample_names.forEach((sample) => {
     selector
       .append("option")
       .text(sample)
       .property("value", sample);
   });
 
-  // Build initial plots by using first sample from list
-  const firstBB = sampleNames[0];
+  // build default plots
+  const firstBB = sample_names[0];
   buildCharts(firstBB);
   buildMetadata(firstBB);
 });
 }
 
 function optionChanged(changeBB) {
-// Retrieve data for the dropdown menu selection
+//get new data for dropdown menu selection
 buildCharts(changeBB);
 buildMetadata(changeBB);
 }
 
-// Initialize visuals
+// initialize dashboard
 init();
